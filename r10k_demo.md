@@ -12,6 +12,7 @@ This is a repackaging of tutorials offered by
 
   * A deployment tool
   * Manage environments with git
+  * Manage modules with Puppetfile (YAML file for defining module sources)
   * Simple tool with great power
 
 
@@ -49,6 +50,8 @@ Make sure that both machines can resolve `puppet` to the master
 
 Add puppetlabs apt repo to systems
 
+On *local machine*
+
 ~~~~
 hosts=('master' 'agent')
 for host in ${hosts[@]}
@@ -60,33 +63,33 @@ done
 ~~~~
 
 
-##
+## Install Puppet Master {data-background="images/dark-puppet.jpg"}
 
-On master, install puppet master
+On *master*, install puppet master
 
     apt-get install -y puppetmaster-passenger
 
 
-##
+## Stop Master Server {data-background="images/dark-puppet.jpg"}
 
-On master, stop apache
+On *master*, stop apache
 
     service apache2 stop
 
 
-##
+## Install Puppet Agent {data-background="images/dark-puppet.jpg"}
 
-On agent, install puppet
+On *agent*, install puppet
 
     apt-get install -y puppet
 
 
-# Configure Puppet master {data-background="images/dark-dirty-hands.jpg"}
+# Configure Puppet master {data-background="images/dark-puppet.jpg"}
 
 
 ##
 
-On master, add dns_alt_names to `main` section of `puppet.conf`
+On *master*, add dns_alt_names to `main` section of `puppet.conf`
 
     [main]
     ....
@@ -95,14 +98,14 @@ On master, add dns_alt_names to `main` section of `puppet.conf`
 
 ##
 
-On master, comment out the templatedir directive in the `main` section of `puppet.conf`
+On *master*, comment out the templatedir directive in the `main` section of `puppet.conf`
 
     sed -i s/^templatedir/#templatedir/ /etc/puppet/puppet.conf
 
 
 ##
 
-On master, create CA
+On *master*, create CA
 
     puppet master --verbose --no-daemonize
 
@@ -113,55 +116,64 @@ NOTE: Kill this process after the following is displayed:
 
 ##
 
-On master, start apache
+On *master*, start apache
 
     service apache2 start
 
 
-# Configure Puppet agent {data-background="images/dark-dirty-hands.jpg"}
+# Configure Puppet agent {data-background="images/dark-puppet.jpg"}
 
 
 ##
 
-On agent, comment out the templatedir directive in the `main` section of `puppet.conf`
+On *agent*, comment out the templatedir directive in the `main` section of `puppet.conf`
 
     sed -i s/^templatedir/#templatedir/ /etc/puppet/puppet.conf
 
 
 ##
 
-On agent, run agent to generate cert
+On *agent*, run agent to generate cert
 
     puppet agent -t
 
 
 ##
 
-On master, sign agent cert
+On *master*, sign agent cert
 
     puppet cert sign --all
 
 
 ##
 
-On agent, run agent to get catalog
+On *agent*, run agent to get catalog
 
     puppet agent -t
 
 
-# Configure r10k on master {data-background="images/dark-dirty-hands.jpg"}
+# Configure git {data-background="images/dark-git.png"}
+
+~~~~
+apt-get install -y git
+git config --global user.email "test@example.com"
+git config --global user.name "test user"
+~~~~
+
+
+# Configure r10k on master {data-background="images/dark-mario.png"}
 
 
 ##
 
-On master, install r10k modules and dependencies
+On *master*, install r10k modules and dependencies
 
     puppet module install zack/r10k
 
 
 ##
 
-On master, install and configure r10k using module
+On *master*, install and configure r10k using module
 
 ~~~~
 cat > configure_r10k.pp <<EOD
@@ -182,12 +194,12 @@ puppet apply configure_r10k.pp
 ~~~~
 
 
-# Configure directory environments {data-background="images/dark-dirty-hands.jpg"}
+# Configure directory environments {data-background="images/dark-directory.jpg"}
 
 
 ##
 
-On master, add directives to `main` section of `puppet.conf`
+On *master*, add directives to `main` section of `puppet.conf`
 
 ~~~~
 [main]
@@ -196,20 +208,12 @@ environmentpath = $confdir/environments
 basemodulepath  = $confdir/modules
 ~~~~
 
-
-# Configure r10k {data-background="images/dark-dirty-hands.jpg"}
-
-
-## Install git on master
-
-~~~~
-apt-get install -y git
-git config --global user.email "test@example.com"
-git config --global user.name "test user"
-~~~~
+# Set up git resources {data-background="images/dark-git.png"}
 
 
 ## Create git repo for r10k controller
+
+On *master*, but in the real world this would be on a development system
 
 ~~~~
 mkdir -p puppet-repo/src puppet-repo/git
@@ -220,35 +224,17 @@ git init --bare controller.git
 
 ## Create git repo for test module
 
+On *master*, but in the real world this would be on a development system
+
     git init --bare helloworld.git
-
-
-## Checkout a working copy of your r10k controller
-
-~~~~
-cd ../src
-git clone ../git/controller.git
-cd controller
-~~~~
-
-
-## Prepare production environment
-
-~~~~
-cat > environment.conf <<EOD
-modulepath = modules:\$basemodulepath
-EOD
-git add environment.conf
-git commit -m "Add environment.conf"
-git branch -m production
-git push -u origin production
-~~~~
 
 
 ## Create an external module
 
+On *master*, but in the real world this would be on a development system
+
 ~~~~
-cd ..
+cd ../src
 git clone ../git/helloworld.git
 cd helloworld
 puppet module generate testing/helloworld --skip-interview
@@ -267,10 +253,35 @@ git push -u origin master
 ~~~~
 
 
+## Checkout a working copy of your r10k controller
+
+On *master*, but in the real world this would be on a development system
+
+~~~~
+cd ..
+git clone ../git/controller.git
+cd controller
+~~~~
+
+
+## Prepare production environment
+
+In git checkout of controller ...
+
+~~~~
+cat > environment.conf <<EOD
+modulepath = modules:\$basemodulepath
+EOD
+git add environment.conf
+git commit -m "Add environment.conf"
+git branch -m production
+git push -u origin production
+~~~~
+
+
 ## Include the module in site.pp
 
 ~~~~
-cd ../controller
 mkdir manifests
 cd manifests
 cat > site.pp <<EOD
@@ -300,10 +311,22 @@ git push
 
 # Fully Operational {data-background="images/dark-death-star.jpg"}
 
+## Contents of control checkout
+
+In git checkout of controller ...
+
+~~~~
+tree ../controller
+../controller/
+├── environment.conf
+├── manifests
+│   └── site.pp
+└── Puppetfile
+~~~~
 
 ## Deploy
 
-Run r10k to deploy production environment
+On *master*, run r10k to deploy production environment
 
     r10k deploy environment -p -v
     service apache2 restart
@@ -314,6 +337,8 @@ Run r10k to deploy production environment
 You should now have the helloworld module associated with the production
 environment on the system.
 
+On *master*, inspect helloworld in production environment
+
     cat /etc/puppet/environments/production/modules/helloworld/manifests/init.pp
 
 
@@ -323,12 +348,17 @@ Applying the production environment on the agent should result in the hello
 world message notifying you that it is classified to the production
 environment.
 
-On agent, run agent to get catalog
+On *agent*, run agent to get catalog
 
     puppet agent -t
 
 
 ## Create branch
+
+
+On *master*, but in the real world this would be on a development system
+
+In git checkout of controller ...
 
     git checkout -b testing
     git push -u origin testing
@@ -336,7 +366,7 @@ On agent, run agent to get catalog
 
 ## Deploy
 
-Run r10k to deploy the testing environment
+On *master*, run r10k to deploy the testing environment
 
     r10k deploy environment -p -v
     service apache2 restart
@@ -347,12 +377,14 @@ Run r10k to deploy the testing environment
 You should now have the helloworld module associated with the testing
 environment on the system.
 
+On *master*, inspect helloworld in testing environment
+
     cat /etc/puppet/environments/testing/modules/helloworld/manifests/init.pp
 
 
 ## Classify agent to branch
 
-On agent, add the following section to the `puppet.conf`
+On *agent*, add the following section to the `puppet.conf`
 
     [agent]
     environment = testing
@@ -360,7 +392,7 @@ On agent, add the following section to the `puppet.conf`
 
 ## Apply
 
-On agent, run agent to get catalog
+On *agent*, run agent to get catalog
 
     puppet agent -t
 
@@ -368,6 +400,10 @@ On agent, run agent to get catalog
 ## Add module to Puppetfile
 
 We will now add an module to the Puppetfile in the testing branch.
+
+On *master*, but in the real world this would be on a development system
+
+In git checkout of controller ...
 
 ~~~~
 cat >> Puppetfile <<EOD
@@ -382,7 +418,7 @@ git push
 
 ## Deploy
 
-Run r10k to deploy the testing environment
+On *master*, run r10k to deploy the testing environment
 
     r10k deploy environment -p -v
     service apache2 restart
@@ -393,6 +429,9 @@ Run r10k to deploy the testing environment
 The motd module is now installed in the testing
 environment on the system, but not in the production environment.
 
+On *master*, inspect the modules installed for both the production and testing
+environments.
+
     ls /etc/puppet/environments/testing/modules
     ls /etc/puppet/environments/production/modules
 
@@ -400,6 +439,10 @@ environment on the system, but not in the production environment.
 ## Destroy Environment
 
 We will now destroy the testing environment by deleting the testing branch.
+
+On *master*, but in the real world this would be on a development system
+
+In git checkout of controller ...
 
 ~~~~
 git checkout production
@@ -410,7 +453,7 @@ git push origin --delete testing
 
 ## Deploy
 
-Run r10k to deploy the environments
+On *master*, run r10k to deploy the environments
 
     r10k deploy environment -p -v
     service apache2 restart
@@ -420,7 +463,11 @@ Run r10k to deploy the environments
 
 The testing environment is now history.
 
+On *master*, inspect the environments installed on the master
+
     ls /etc/puppet/environments
 
 
 # r10k {data-background="images/dark-mario.png"}
+
+## Questions?

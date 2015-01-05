@@ -1,0 +1,414 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+
+<title></title>
+
+<meta name="description" content="">    
+
+
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+<link rel="stylesheet" href="css/reveal.min.css">
+  <link rel="stylesheet" href="css/theme/default.css" id="theme">
+
+
+<!-- For syntax highlighting -->
+  <link rel="stylesheet" href="lib/css/zenburn.css">
+
+
+<!-- If the query includes 'print-pdf', use the PDF print sheet -->
+<script>
+  document.write( '<link rel="stylesheet" href="css/print/' +
+    ( window.location.search.match( /print-pdf/gi ) ? 'pdf' : 'paper' ) + 
+    '.css" type="text/css" media="print">' );
+</script>
+
+<!--[if lt IE 9]>
+<script src="lib/js/html5shiv.js"></script>
+<![endif]-->
+</head>
+
+<body>
+
+<div class="reveal">
+
+<!-- Any section element inside of this container is displayed as a slide -->
+<div class="slides">
+
+<section>
+<h1></h1>
+
+<p>
+<h4></h4>
+</p>
+</section>  
+
+
+<section id="r10k" class="level1" data-background="images/dark-mario.png">
+<h1>r10k</h1>
+<section id="section" class="level2">
+<h2></h2>
+<p>This is a repackaging of tutorials offered by</p>
+<ul>
+<li><a href="https://github.com/adrienthebo/r10k-workshop/blob/master/WORKSHOP.mkd">Adrien Thebo</a></li>
+<li><a href="http://garylarizza.com/blog/2014/08/31/r10k-plus-directory-environments/">Gary Larizza</a></li>
+</ul>
+</section>
+<section id="what-is-it" class="level2">
+<h2>What is it?</h2>
+<ul>
+<li>A deployment tool</li>
+<li>Manage environments with git</li>
+<li>Simple tool with great power</li>
+</ul>
+</section>
+<section id="key-components" class="level2">
+<h2>Key components</h2>
+<ul>
+<li>r10k.yaml</li>
+<li>git branches</li>
+<li>Puppetfile</li>
+</ul>
+</section>
+<section id="key-concept" class="level2">
+<h2>Key concept</h2>
+<ul>
+<li>r10k creates (and destroys) environments corresponding to your git repo branches</li>
+<li>r10k allows you to specify modules to install, including versions via Puppetfile</li>
+<li>This allows you to rapidly test on classified systems and merge your changes</li>
+</ul>
+</section>
+</section>
+<section id="install-puppet" class="level1" data-background="images/dark-dirty-hands.jpg">
+<h1>Install Puppet</h1>
+<section id="resolve-puppet" class="level2">
+<h2>Resolve puppet</h2>
+<pre><code>/etc/hosts</code></pre>
+<p>Make sure that both machines can resolve <code>puppet</code> to the master</p>
+</section>
+<section id="ssh-in-a-for-loop" class="level2" data-background="images/dark-austin-powers.jpg">
+<h2>SSH in a for loop</h2>
+<p>Add puppetlabs apt repo to systems</p>
+<pre><code>hosts=(&#39;master&#39; &#39;agent&#39;)
+for host in ${hosts[@]}
+do
+    ssh root@$host &quot;wget https://apt.puppetlabs.com/puppetlabs-release-trusty.deb&quot;
+    ssh root@$host &quot;dpkg -i puppetlabs-release-trusty.deb&quot;
+    ssh root@$host &quot;apt-get update&quot;
+done</code></pre>
+</section>
+<section id="section-1" class="level2">
+<h2></h2>
+<p>On master, install puppet master</p>
+<pre><code>apt-get install -y puppetmaster-passenger</code></pre>
+</section>
+<section id="section-2" class="level2">
+<h2></h2>
+<p>On master, stop apache</p>
+<pre><code>service apache2 stop</code></pre>
+</section>
+<section id="section-3" class="level2">
+<h2></h2>
+<p>On agent, install puppet</p>
+<pre><code>apt-get install -y puppet</code></pre>
+</section>
+</section>
+<section id="configure-puppet-master" class="level1" data-background="images/dark-dirty-hands.jpg">
+<h1>Configure Puppet master</h1>
+<section id="section-4" class="level2">
+<h2></h2>
+<p>On master, add dns_alt_names to <code>main</code> section of <code>puppet.conf</code></p>
+<pre><code>[main]
+....
+dns_alt_names = puppet,puppet.localdomain,master,master.localdomain</code></pre>
+</section>
+<section id="section-5" class="level2">
+<h2></h2>
+<p>On master, comment out the templatedir directive in the <code>main</code> section of <code>puppet.conf</code></p>
+<pre><code>sed -i s/^templatedir/#templatedir/ /etc/puppet/puppet.conf</code></pre>
+</section>
+<section id="section-6" class="level2">
+<h2></h2>
+<p>On master, create CA</p>
+<pre><code>puppet master --verbose --no-daemonize</code></pre>
+<p>NOTE: Kill this process after the following is displayed:</p>
+<pre><code>Notice: Starting Puppet master version &lt;VERSION&gt;</code></pre>
+</section>
+<section id="section-7" class="level2">
+<h2></h2>
+<p>On master, start apache</p>
+<pre><code>service apache2 start</code></pre>
+</section>
+</section>
+<section id="configure-puppet-agent" class="level1" data-background="images/dark-dirty-hands.jpg">
+<h1>Configure Puppet agent</h1>
+<section id="section-8" class="level2">
+<h2></h2>
+<p>On agent, comment out the templatedir directive in the <code>main</code> section of <code>puppet.conf</code></p>
+<pre><code>sed -i s/^templatedir/#templatedir/ /etc/puppet/puppet.conf</code></pre>
+</section>
+<section id="section-9" class="level2">
+<h2></h2>
+<p>On agent, run agent to generate cert</p>
+<pre><code>puppet agent -t</code></pre>
+</section>
+<section id="section-10" class="level2">
+<h2></h2>
+<p>On master, sign agent cert</p>
+<pre><code>puppet cert sign --all</code></pre>
+</section>
+<section id="section-11" class="level2">
+<h2></h2>
+<p>On agent, run agent to get catalog</p>
+<pre><code>puppet agent -t</code></pre>
+</section>
+</section>
+<section id="configure-r10k-on-master" class="level1" data-background="images/dark-dirty-hands.jpg">
+<h1>Configure r10k on master</h1>
+<section id="section-12" class="level2">
+<h2></h2>
+<p>On master, install r10k modules and dependencies</p>
+<pre><code>puppet module install zack/r10k</code></pre>
+</section>
+<section id="section-13" class="level2">
+<h2></h2>
+<p>On master, install and configure r10k using module</p>
+<pre><code>cat &gt; configure_r10k.pp &lt;&lt;EOD
+class { &#39;r10k&#39;:
+  version           =&gt; &#39;1.3.2&#39;,
+  sources           =&gt; {
+    &#39;puppet&#39; =&gt; {
+        &#39;remote&#39;  =&gt; &#39;file:///root/puppet-repo/git/controller.git&#39;,
+        &#39;basedir&#39; =&gt; &quot;\${::settings::confdir}/environments&quot;,
+        &#39;prefix&#39;  =&gt; false,
+    }
+  },
+  purgedirs         =&gt; [&quot;\${::settings::confdir}/environments&quot;],
+  manage_modulepath =&gt; false,
+}
+EOD
+puppet apply configure_r10k.pp</code></pre>
+</section>
+</section>
+<section id="configure-directory-environments" class="level1" data-background="images/dark-dirty-hands.jpg">
+<h1>Configure directory environments</h1>
+<section id="section-14" class="level2">
+<h2></h2>
+<p>On master, add directives to <code>main</code> section of <code>puppet.conf</code></p>
+<pre><code>[main]
+....
+environmentpath = $confdir/environments
+basemodulepath  = $confdir/modules</code></pre>
+</section>
+</section>
+<section id="configure-r10k" class="level1" data-background="images/dark-dirty-hands.jpg">
+<h1>Configure r10k</h1>
+<section id="install-git-on-master" class="level2">
+<h2>Install git on master</h2>
+<pre><code>apt-get install -y git
+git config --global user.email &quot;test@example.com&quot;
+git config --global user.name &quot;test user&quot;</code></pre>
+</section>
+<section id="create-git-repo-for-r10k-controller" class="level2">
+<h2>Create git repo for r10k controller</h2>
+<pre><code>mkdir -p puppet-repo/src puppet-repo/git
+cd puppet-repo/git
+git init --bare controller.git</code></pre>
+</section>
+<section id="create-git-repo-for-test-module" class="level2">
+<h2>Create git repo for test module</h2>
+<pre><code>git init --bare helloworld.git</code></pre>
+</section>
+<section id="checkout-a-working-copy-of-your-r10k-controller" class="level2">
+<h2>Checkout a working copy of your r10k controller</h2>
+<pre><code>cd ../src
+git clone ../git/controller.git
+cd controller</code></pre>
+</section>
+<section id="prepare-production-environment" class="level2">
+<h2>Prepare production environment</h2>
+<pre><code>cat &gt; environment.conf &lt;&lt;EOD
+modulepath = modules:\$basemodulepath
+EOD
+git add environment.conf
+git commit -m &quot;Add environment.conf&quot;
+git branch -m production
+git push -u origin production</code></pre>
+</section>
+<section id="create-an-external-module" class="level2">
+<h2>Create an external module</h2>
+<pre><code>cd ..
+git clone ../git/helloworld.git
+cd helloworld
+puppet module generate testing/helloworld --skip-interview
+mv testing-helloworld/* .
+rm -rf testing-helloworld
+cat &gt; manifests/init.pp &lt;&lt;EOD
+class helloworld {
+    notify { &quot;Hello world!&quot;:
+        message =&gt; &quot;I am in the \${environment} environment&quot;,
+    }
+}
+EOD
+git add --all
+git commit -m &quot;Add helloworld module&quot;
+git push -u origin master</code></pre>
+</section>
+<section id="include-the-module-in-site.pp" class="level2">
+<h2>Include the module in site.pp</h2>
+<pre><code>cd ../controller
+mkdir manifests
+cd manifests
+cat &gt; site.pp &lt;&lt;EOD
+node default {
+    include helloworld
+}
+EOD
+cd ../
+git add manifests
+git commit -m &quot;Add helloworld module to default node&quot;
+git push</code></pre>
+</section>
+<section id="add-module-to-puppetfile" class="level2">
+<h2>Add module to Puppetfile</h2>
+<pre><code>cat &gt; Puppetfile &lt;&lt;EOD
+mod &quot;helloworld&quot;,
+  :git =&gt; &quot;file:///root/puppet-repo/git/helloworld.git&quot;
+EOD
+git add Puppetfile
+git commit -m &quot;Add Puppetfile to r10k controller&quot;
+git push</code></pre>
+</section>
+</section>
+<section id="fully-operational" class="level1" data-background="images/dark-death-star.jpg">
+<h1>Fully Operational</h1>
+<section id="deploy" class="level2">
+<h2>Deploy</h2>
+<p>Run r10k to deploy production environment</p>
+<pre><code>r10k deploy environment -p -v
+service apache2 restart</code></pre>
+</section>
+<section id="inspect" class="level2">
+<h2>Inspect</h2>
+<p>You should now have the helloworld module associated with the production environment on the system.</p>
+<pre><code>cat /etc/puppet/environments/production/modules/helloworld/manifests/init.pp</code></pre>
+</section>
+<section id="apply" class="level2">
+<h2>Apply</h2>
+<p>Applying the production environment on the agent should result in the hello world message notifying you that it is classified to the production environment.</p>
+<p>On agent, run agent to get catalog</p>
+<pre><code>puppet agent -t</code></pre>
+</section>
+<section id="create-branch" class="level2">
+<h2>Create branch</h2>
+<pre><code>git checkout -b testing
+git push -u origin testing</code></pre>
+</section>
+<section id="deploy-1" class="level2">
+<h2>Deploy</h2>
+<p>Run r10k to deploy the testing environment</p>
+<pre><code>r10k deploy environment -p -v
+service apache2 restart</code></pre>
+</section>
+<section id="inspect-1" class="level2">
+<h2>Inspect</h2>
+<p>You should now have the helloworld module associated with the testing environment on the system.</p>
+<pre><code>cat /etc/puppet/environments/testing/modules/helloworld/manifests/init.pp</code></pre>
+</section>
+<section id="classify-agent-to-branch" class="level2">
+<h2>Classify agent to branch</h2>
+<p>On agent, add the following section to the <code>puppet.conf</code></p>
+<pre><code>[agent]
+environment = testing</code></pre>
+</section>
+<section id="apply-1" class="level2">
+<h2>Apply</h2>
+<p>On agent, run agent to get catalog</p>
+<pre><code>puppet agent -t</code></pre>
+</section>
+<section id="add-module-to-puppetfile-1" class="level2">
+<h2>Add module to Puppetfile</h2>
+<p>We will now add an module to the Puppetfile in the testing branch.</p>
+<pre><code>cat &gt;&gt; Puppetfile &lt;&lt;EOD
+
+mod &quot;puppetlabs/motd&quot;
+EOD
+git add Puppetfile
+git commit -m &quot;Add motd to testing env&quot;
+git push</code></pre>
+</section>
+<section id="deploy-2" class="level2">
+<h2>Deploy</h2>
+<p>Run r10k to deploy the testing environment</p>
+<pre><code>r10k deploy environment -p -v
+service apache2 restart</code></pre>
+</section>
+<section id="inspect-2" class="level2">
+<h2>Inspect</h2>
+<p>The motd module is now installed in the testing environment on the system, but not in the production environment.</p>
+<pre><code>ls /etc/puppet/environments/testing/modules
+ls /etc/puppet/environments/production/modules</code></pre>
+</section>
+<section id="destroy-environment" class="level2">
+<h2>Destroy Environment</h2>
+<p>We will now destroy the testing environment by deleting the testing branch.</p>
+<pre><code>git checkout production
+git branch -D testing
+git push origin --delete testing</code></pre>
+</section>
+<section id="deploy-3" class="level2">
+<h2>Deploy</h2>
+<p>Run r10k to deploy the environments</p>
+<pre><code>r10k deploy environment -p -v
+service apache2 restart</code></pre>
+</section>
+<section id="inspect-3" class="level2">
+<h2>Inspect</h2>
+<p>The testing environment is now history.</p>
+<pre><code>ls /etc/puppet/environments</code></pre>
+</section>
+</section>
+<section id="r10k-1" class="level1" data-background="images/dark-mario.png">
+<h1>r10k</h1>
+</section>
+</div>
+
+<script src="lib/js/head.min.js"></script>
+<script src="js/reveal.min.js"></script>
+
+<script>
+  // Full list of configuration options available here:
+  // https://github.com/hakimel/reveal.js#configuration
+  Reveal.initialize({
+    controls: true,
+    progress: true,
+    history: true,
+    center: false,
+
+  // available themes are in /css/theme
+      theme: Reveal.getQueryHash().theme || 'default', 
+  
+  // default/cube/page/concave/zoom/linear/fade/none
+      transition: Reveal.getQueryHash().transition || 'default',
+  
+  // Optional libraries used to extend on reveal.js
+  dependencies: [
+    { src: 'lib/js/classList.js', condition: function() { return !document.body.classList; } },
+    { src: 'plugin/markdown/showdown.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+    { src: 'plugin/markdown/markdown.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+    { src: 'plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } },
+    { src: 'plugin/zoom-js/zoom.js', async: true, condition: function() { return !!document.body.classList; } },
+    { src: 'plugin/notes/notes.js', async: true, condition: function() { return !!document.body.classList; } }
+    // { src: 'plugin/remotes/remotes.js', async: true, condition: function() { return !!document.body.classList; } }
+  ]
+  });
+
+</script>
+
+</body>
+</html>

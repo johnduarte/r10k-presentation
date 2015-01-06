@@ -56,8 +56,8 @@ On *local machine*
 hosts=('master' 'agent')
 for host in ${hosts[@]}
 do
-    ssh root@$host "wget https://apt.puppetlabs.com/puppetlabs-release-trusty.deb"
-    ssh root@$host "dpkg -i puppetlabs-release-trusty.deb"
+    ssh root@$host "wget https://apt.puppetlabs.com/puppetlabs-release-precise.deb"
+    ssh root@$host "dpkg -i puppetlabs-release-precise.deb"
     ssh root@$host "apt-get update"
 done
 ~~~~
@@ -85,15 +85,6 @@ On *agent*, install puppet
 
 
 # Configure Puppet master {data-background="images/dark-puppet.jpg"}
-
-
-##
-
-On *master*, add dns_alt_names to `main` section of `puppet.conf`
-
-    [main]
-    ....
-    dns_alt_names = puppet,puppet.localdomain,master,master.localdomain
 
 
 ##

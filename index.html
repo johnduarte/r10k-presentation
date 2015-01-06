@@ -99,8 +99,8 @@
 <pre><code>hosts=(&#39;master&#39; &#39;agent&#39;)
 for host in ${hosts[@]}
 do
-    ssh root@$host &quot;wget https://apt.puppetlabs.com/puppetlabs-release-trusty.deb&quot;
-    ssh root@$host &quot;dpkg -i puppetlabs-release-trusty.deb&quot;
+    ssh root@$host &quot;wget https://apt.puppetlabs.com/puppetlabs-release-precise.deb&quot;
+    ssh root@$host &quot;dpkg -i puppetlabs-release-precise.deb&quot;
     ssh root@$host &quot;apt-get update&quot;
 done</code></pre>
 </section>
@@ -124,24 +124,17 @@ done</code></pre>
 <h1>Configure Puppet master</h1>
 <section id="section-1" class="level2">
 <h2></h2>
-<p>On <em>master</em>, add dns_alt_names to <code>main</code> section of <code>puppet.conf</code></p>
-<pre><code>[main]
-....
-dns_alt_names = puppet,puppet.localdomain,master,master.localdomain</code></pre>
-</section>
-<section id="section-2" class="level2">
-<h2></h2>
 <p>On <em>master</em>, comment out the templatedir directive in the <code>main</code> section of <code>puppet.conf</code></p>
 <pre><code>sed -i s/^templatedir/#templatedir/ /etc/puppet/puppet.conf</code></pre>
 </section>
-<section id="section-3" class="level2">
+<section id="section-2" class="level2">
 <h2></h2>
 <p>On <em>master</em>, create CA</p>
 <pre><code>puppet master --verbose --no-daemonize</code></pre>
 <p>NOTE: Kill this process after the following is displayed:</p>
 <pre><code>Notice: Starting Puppet master version &lt;VERSION&gt;</code></pre>
 </section>
-<section id="section-4" class="level2">
+<section id="section-3" class="level2">
 <h2></h2>
 <p>On <em>master</em>, start apache</p>
 <pre><code>service apache2 start</code></pre>
@@ -149,22 +142,22 @@ dns_alt_names = puppet,puppet.localdomain,master,master.localdomain</code></pre>
 </section>
 <section id="configure-puppet-agent" class="level1" data-background="images/dark-puppet.jpg">
 <h1>Configure Puppet agent</h1>
-<section id="section-5" class="level2">
+<section id="section-4" class="level2">
 <h2></h2>
 <p>On <em>agent</em>, comment out the templatedir directive in the <code>main</code> section of <code>puppet.conf</code></p>
 <pre><code>sed -i s/^templatedir/#templatedir/ /etc/puppet/puppet.conf</code></pre>
 </section>
-<section id="section-6" class="level2">
+<section id="section-5" class="level2">
 <h2></h2>
 <p>On <em>agent</em>, run agent to generate cert</p>
 <pre><code>puppet agent -t</code></pre>
 </section>
-<section id="section-7" class="level2">
+<section id="section-6" class="level2">
 <h2></h2>
 <p>On <em>master</em>, sign agent cert</p>
 <pre><code>puppet cert sign --all</code></pre>
 </section>
-<section id="section-8" class="level2">
+<section id="section-7" class="level2">
 <h2></h2>
 <p>On <em>agent</em>, run agent to get catalog</p>
 <pre><code>puppet agent -t</code></pre>
@@ -178,12 +171,12 @@ git config --global user.name &quot;test user&quot;</code></pre>
 </section>
 <section id="configure-r10k-on-master" class="level1" data-background="images/dark-mario.png">
 <h1>Configure r10k on master</h1>
-<section id="section-9" class="level2">
+<section id="section-8" class="level2">
 <h2></h2>
 <p>On <em>master</em>, install r10k modules and dependencies</p>
 <pre><code>puppet module install zack/r10k</code></pre>
 </section>
-<section id="section-10" class="level2">
+<section id="section-9" class="level2">
 <h2></h2>
 <p>On <em>master</em>, install and configure r10k using module</p>
 <pre><code>cat &gt; configure_r10k.pp &lt;&lt;EOD
@@ -205,7 +198,7 @@ puppet apply configure_r10k.pp</code></pre>
 </section>
 <section id="configure-directory-environments" class="level1" data-background="images/dark-directory.jpg">
 <h1>Configure directory environments</h1>
-<section id="section-11" class="level2">
+<section id="section-10" class="level2">
 <h2></h2>
 <p>On <em>master</em>, add directives to <code>main</code> section of <code>puppet.conf</code></p>
 <pre><code>[main]

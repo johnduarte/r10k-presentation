@@ -344,6 +344,21 @@ On *agent*, run agent to get catalog
     puppet agent -t
 
 
+## Create post-update hook {data-background="images/dark-git.png"}
+
+Manually deploying is something git can automate for us.
+
+Create a post-update hook to do this for us
+
+~~~~
+cat >> ../../git/controller.git/hooks/post-update <<EOD
+#!/bin/sh
+r10k deploy environment -p -v && service apache2 restart
+EOD
+chmod +x ../../git/controller.git/hooks/post-update
+~~~~
+
+
 ## Create branch
 
 
@@ -353,14 +368,6 @@ In git checkout of controller ...
 
     git checkout -b testing
     git push -u origin testing
-
-
-## Deploy
-
-On *master*, run r10k to deploy the testing environment
-
-    r10k deploy environment -p -v
-    service apache2 restart
 
 
 ## Inspect
@@ -407,14 +414,6 @@ git push
 ~~~~
 
 
-## Deploy
-
-On *master*, run r10k to deploy the testing environment
-
-    r10k deploy environment -p -v
-    service apache2 restart
-
-
 ## Inspect
 
 The motd module is now installed in the testing
@@ -440,14 +439,6 @@ git checkout production
 git branch -D testing
 git push origin --delete testing
 ~~~~
-
-
-## Deploy
-
-On *master*, run r10k to deploy the environments
-
-    r10k deploy environment -p -v
-    service apache2 restart
 
 
 ## Inspect

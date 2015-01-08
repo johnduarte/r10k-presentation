@@ -314,18 +314,22 @@ service apache2 restart</code></pre>
 <p>On <em>agent</em>, run agent to get catalog</p>
 <pre><code>puppet agent -t</code></pre>
 </section>
+<section id="create-post-update-hook" class="level2" data-background="images/dark-git.png">
+<h2>Create post-update hook</h2>
+<p>Manually deploying is something git can automate for us.</p>
+<p>Create a post-update hook to do this for us</p>
+<pre><code>cat &gt;&gt; ../../git/controller.git/hooks/post-update &lt;&lt;EOD
+#!/bin/sh
+r10k deploy environment -p -v &amp;&amp; service apache2 restart
+EOD
+chmod +x ../../git/controller.git/hooks/post-update</code></pre>
+</section>
 <section id="create-branch" class="level2">
 <h2>Create branch</h2>
 <p>On <em>master</em>, but in the real world this would be on a development system</p>
 <p>In git checkout of controller ...</p>
 <pre><code>git checkout -b testing
 git push -u origin testing</code></pre>
-</section>
-<section id="deploy-1" class="level2">
-<h2>Deploy</h2>
-<p>On <em>master</em>, run r10k to deploy the testing environment</p>
-<pre><code>r10k deploy environment -p -v
-service apache2 restart</code></pre>
 </section>
 <section id="inspect-1" class="level2">
 <h2>Inspect</h2>
@@ -357,12 +361,6 @@ git add Puppetfile
 git commit -m &quot;Add motd to testing env&quot;
 git push</code></pre>
 </section>
-<section id="deploy-2" class="level2">
-<h2>Deploy</h2>
-<p>On <em>master</em>, run r10k to deploy the testing environment</p>
-<pre><code>r10k deploy environment -p -v
-service apache2 restart</code></pre>
-</section>
 <section id="inspect-2" class="level2">
 <h2>Inspect</h2>
 <p>The motd module is now installed in the testing environment on the system, but not in the production environment.</p>
@@ -378,12 +376,6 @@ ls /etc/puppet/environments/production/modules</code></pre>
 <pre><code>git checkout production
 git branch -D testing
 git push origin --delete testing</code></pre>
-</section>
-<section id="deploy-3" class="level2">
-<h2>Deploy</h2>
-<p>On <em>master</em>, run r10k to deploy the environments</p>
-<pre><code>r10k deploy environment -p -v
-service apache2 restart</code></pre>
 </section>
 <section id="inspect-3" class="level2">
 <h2>Inspect</h2>

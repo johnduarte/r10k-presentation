@@ -85,7 +85,7 @@ on master, "puppet apply /tmp/configure_r10k.pp"
 end
 
 step "Configure directory environments"
-on master, "sed -i '/^#templatedir/a environmentpath = $confdir/environments\\nbasemodulepath  = $confdir/modules' /etc/puppet/puppet.conf"
+on master, "sed -i '/^\\[main\\]/a environmentpath = $confdir/environments\\nbasemodulepath  = $confdir/modules' /etc/puppet/puppet.conf"
 on master, "mkdir -p puppet-repo/src puppet-repo/git"
 on master, "cd puppet-repo/git && git init --bare controller.git"
 on master, "cd puppet-repo/git && git init --bare helloworld.git"
